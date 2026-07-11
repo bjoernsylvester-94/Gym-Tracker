@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gym Tracker</title>
+    
+    <!-- PWA Einstellungen für den App-Modus -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Gym Tracker">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Gym Tracker","short_name":"Gym","start_url":"./","display":"standalone","background_color":"#f4f4f9","theme_color":"#333"}'>
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }
+        h1 { text-align: center; }
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        button { padding: 15px; border: none; border-radius: 8px; background: #ddd; font-weight: bold; cursor: pointer; }
+        button:active { background: #bbb; }
+        #log-area { margin-top: 20px; padding: 10px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <h1>Gym Tracker</h1>
+    
+    <div class="button-grid">
+        <button onclick="logAction('Brust')">Brust</button>
+        <button onclick="logAction('Schultern')">Schultern</button>
+        <button onclick="logAction('Rücken')">Rücken</button>
+        <button onclick="logAction('Beine')">Beine</button>
+    </div>
+
+    <div id="log-area">
+        <h3>Letzte Aktivitäten:</h3>
+        <ul id="history-list"></ul>
+    </div>
+
+    <script>
+        function logAction(muscle) {
+            const now = new Date().toLocaleString();
+            const logEntry = `${muscle} trainiert am ${now}`;
+            
+            // Daten im localStorage speichern
+            let history = JSON.parse(localStorage.getItem('gymHistory') || '[]');
+            history.unshift(logEntry);
+            localStorage.setItem('gymHistory', JSON.stringify(history));
+            
+            updateHistory();
+        }
+
+        function updateHistory() {
+            const list = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem('gymHistory') || '[]');
+            list.innerHTML = history.map(item => `<li>${item}</li>`).join('');
+        }
+
+        // Historie beim Laden anzeigen
+        updateHistory();
+    </script>
+</body>
+</html>
