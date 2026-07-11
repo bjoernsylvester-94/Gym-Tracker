@@ -30,6 +30,12 @@
         .sum-box { background: #333; color: white; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9em; }
     </style>
 </head>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
+
 <body>
 
 <div class="container">
