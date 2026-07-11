@@ -1,62 +1,180 @@
-<!DOCTYPE html>
+<!<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gym Tracker</title>
-    
-    <!-- PWA Einstellungen für den App-Modus -->
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Gym Tracker">
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Gym Tracker","short_name":"Gym","start_url":"./","display":"standalone","background_color":"#f4f4f9","theme_color":"#333"}'>
-
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Gym Tracker","short_name":"Gym","display":"standalone","start_url":"./"}'>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }
-        h1 { text-align: center; }
-        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        button { padding: 15px; border: none; border-radius: 8px; background: #ddd; font-weight: bold; cursor: pointer; }
-        button:active { background: #bbb; }
-        #log-area { margin-top: 20px; padding: 10px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 10px; background: #f4f4f9; }
+        .container { max-width: 500px; margin: auto; }
+        h2 { text-align: center; color: #222; }
+        .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 10px; }
+        .tab-btn { background: #ddd; border: none; padding: 8px 2px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
+        .tab-btn.active { background: #333; color: white; }
+        .uebung-grid { display: grid; gap: 6px; margin-bottom: 15px; }
+        .uebung-btn { background: white; border: 1px solid #ccc; padding: 10px; border-radius: 6px; cursor: pointer; text-align: left; width: 100%; }
+        .uebung-btn.active { border: 2px solid #28a745; background: #e8f5e9; font-weight: bold; }
+        
+        .input-row { display: flex; gap: 6px; align-items: center; margin-top: 10px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        #add-btn { min-width: 50px; padding: 12px; border-radius: 6px; border:none; background:#333; color:white; font-weight:bold; cursor: pointer; }
+
+        .main-btn { background: #333; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; margin-top: 8px; cursor: pointer; }
+        .info-box { background: #fff; padding: 10px; margin: 10px 0; border-radius: 6px; border-left: 4px solid #333; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 6px; overflow: hidden; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        th { background: #eee; }
+        .sum-box { background: #333; color: white; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
-    <h1>Gym Tracker</h1>
+<div class="container">
+    <h2>Gym Tracker</h2>
+    <div class="tabs" id="tabContainer"></div>
+    <div id="gruppenContainer"></div>
+
+    <div id="eingabeBereich" style="display:none;">
+        <div id="letzterStand" class="info-box"></div>
+        <div class="input-row">
+            <input type="number" id="wdh" placeholder="Wdh">
+            <input type="number" id="kg" placeholder="kg">
+            <button id="add-btn" onclick="satzHinzufuegen()">+</button>
+        </div>
+        <div id="aktuellesSetLog" style="margin: 8px 0;"></div>
+        <button class="main-btn" onclick="speichern()" style="background: #28a745;">Übung speichern</button>
+    </div>
+
+    <div id="heutigesWorkoutLog" style="display:none;">
+        <h3>Heute bereits trainiert:</h3>
+        <table id="workoutTable">
+            <thead><tr><th>Übung</th><th>Sätze</th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <div id="gesamtZaehler" class="sum-box"></div>
+    </div>
+
+    <button class="main-btn" onclick="trainingAbschliessen()" style="background: #007bff;">Training beenden</button>
+    <button class="main-btn" onclick="zeigeHistorie()" style="background: #6c757d;">Historie anzeigen</button>
+    <button class="main-btn" onclick="loescheDaten()" style="background: #dc3545;">Daten zurücksetzen</button>
     
-    <div class="button-grid">
-        <button onclick="logAction('Brust')">Brust</button>
-        <button onclick="logAction('Schultern')">Schultern</button>
-        <button onclick="logAction('Rücken')">Rücken</button>
-        <button onclick="logAction('Beine')">Beine</button>
-    </div>
+    <div id="historienBereich"></div>
+</div>
 
-    <div id="log-area">
-        <h3>Letzte Aktivitäten:</h3>
-        <ul id="history-list"></ul>
-    </div>
+<script>
+    const datenbank = {
+        "Brust": ["Brustpresse (Maschine)", "Butterfly (Maschine)", "Cable Crossovers (Flys)", "Schrägbankdrücken (Smith Machine)"],
+        "Rücken": ["Iso-Laterales Rudern", "Latzug (Maschine)", "Latzug Kabelzug", "Rückenstrecken (Maschine)", "Sitzendes Rudern am Kabelzug - V-Griff (Kabel)"],
+        "Beine": ["Beinbeuger liegend", "Beinpresse", "Beinstrecker sitzend", "Hackenschmidt Squat (Maschine)"],
+        "Schultern": ["Schulterpresse sitzend (Maschine)", "Seitheben (Maschine)", "Reverse Butterfly (Maschine)"],
+        "Arme": ["Bizepscurl (Maschine)", "Hammer Curl (Kurzhantel)", "Trizepsdrücken mit dem Seil"],
+        "Bauch": ["Crunch (Maschine)", "Rotationsmaschine"]
+    };
 
-    <script>
-        function logAction(muscle) {
-            const now = new Date().toLocaleString();
-            const logEntry = `${muscle} trainiert am ${now}`;
-            
-            // Daten im localStorage speichern
-            let history = JSON.parse(localStorage.getItem('gymHistory') || '[]');
-            history.unshift(logEntry);
-            localStorage.setItem('gymHistory', JSON.stringify(history));
-            
-            updateHistory();
-        }
+    let aktiveUebung = "";
+    let aktuelleSätze = [];
+    let heutigesWorkout = [];
 
-        function updateHistory() {
-            const list = document.getElementById('history-list');
-            const history = JSON.parse(localStorage.getItem('gymHistory') || '[]');
-            list.innerHTML = history.map(item => `<li>${item}</li>`).join('');
-        }
+    const tabContainer = document.getElementById('tabContainer');
+    Object.keys(datenbank).forEach(g => {
+        let b = document.createElement('button');
+        b.className = 'tab-btn'; b.innerHTML = g;
+        b.onclick = () => zeigeGruppe(g, b);
+        tabContainer.appendChild(b);
+    });
 
-        // Historie beim Laden anzeigen
-        updateHistory();
-    </script>
+    function zeigeGruppe(gruppe, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const container = document.getElementById('gruppenContainer');
+        container.innerHTML = '';
+        datenbank[gruppe].forEach(u => {
+            let b = document.createElement('button');
+            b.className = 'uebung-btn';
+            b.innerHTML = u;
+            b.onclick = () => waehleUebung(u, b);
+            container.appendChild(b);
+        });
+    }
+
+    function waehleUebung(name, btn) {
+        document.querySelectorAll('.uebung-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        aktiveUebung = name;
+        aktuelleSätze = [];
+        document.getElementById('eingabeBereich').style.display = 'block';
+        document.getElementById('aktuellesSetLog').innerHTML = '';
+        
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const letzte = logs.filter(l => l.uebung === name).slice(-1)[0];
+        document.getElementById('letzterStand').innerHTML = letzte ? 
+            `<strong>Letztes Mal:</strong> ${letzte.saetze.map(s => `${s.wdh}x${s.kg}kg`).join(', ')}` : "Keine Historie.";
+    }
+
+    function satzHinzufuegen() {
+        const wdh = parseInt(document.getElementById('wdh').value);
+        const kg = parseInt(document.getElementById('kg').value);
+        if(isNaN(wdh) || isNaN(kg)) return;
+        aktuelleSätze.push({wdh, kg});
+        
+        const logDiv = document.getElementById('aktuellesSetLog');
+        logDiv.innerHTML = `
+            <div style="background: #e9ecef; padding: 5px; border-radius: 4px; text-align: center; font-weight: bold; margin-bottom: 5px;">
+                Satz ${aktuelleSätze.length} erfasst
+            </div>
+            <div style="font-size: 0.85em; text-align: center;">
+                ${aktuelleSätze.map((s, i) => `${i+1}. ${s.wdh}x${s.kg}kg`).join(' | ')}
+            </div>`;
+        document.getElementById('wdh').value = ''; document.getElementById('kg').value = '';
+    }
+
+    function speichern() {
+        if(aktuelleSätze.length === 0) return;
+        heutigesWorkout.push({uebung: aktiveUebung, saetze: [...aktuelleSätze]});
+        
+        document.getElementById('heutigesWorkoutLog').style.display = 'block';
+        const tableBody = document.querySelector('#workoutTable tbody');
+        const row = tableBody.insertRow();
+        row.insertCell(0).innerHTML = aktiveUebung;
+        row.insertCell(1).innerHTML = aktuelleSätze.map(s => s.wdh+'x'+s.kg+'kg').join(', ');
+        
+        updateGesamtZaehler();
+        
+        document.getElementById('eingabeBereich').style.display = 'none';
+        document.querySelectorAll('.uebung-btn').forEach(b => b.classList.remove('active'));
+    }
+
+    function updateGesamtZaehler() {
+        let gesamtSaetze = 0;
+        let gesamtGewicht = 0;
+        heutigesWorkout.forEach(u => {
+            u.saetze.forEach(s => {
+                gesamtSaetze++;
+                gesamtGewicht += (s.wdh * s.kg);
+            });
+        });
+        document.getElementById('gesamtZaehler').innerHTML = 
+            `<strong>Gesamt heute:</strong> ${gesamtSaetze} Sätze | ${gesamtGewicht} kg bewegt`;
+    }
+
+    function trainingAbschliessen() {
+        const log = JSON.parse(localStorage.getItem('logs')) || [];
+        heutigesWorkout.forEach(item => log.push({...item, datum: new Date().toLocaleDateString()}));
+        localStorage.setItem('logs', JSON.stringify(log));
+        location.reload();
+    }
+    
+    function zeigeHistorie() {
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const b = document.getElementById('historienBereich');
+        b.innerHTML = "<h3>Historie:</h3>" + logs.slice().reverse().map(l => 
+            `<div style="padding:5px; border-bottom:1px solid #ccc;"><strong>${l.datum} - ${l.uebung}</strong><br>${l.saetze.map(s => s.wdh+'x'+s.kg+'kg').join(' | ')}</div>`).join('');
+    }
+
+    function loescheDaten() { if(confirm("Alles löschen?")) { localStorage.removeItem('logs'); location.reload(); } }
+</script>
 </body>
 </html>
