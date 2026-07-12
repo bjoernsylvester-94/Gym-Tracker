@@ -395,4 +395,148 @@
                 gesamtGewicht += (s.wdh * s.kg);
             });
         });
-        document.getElement
+        document.getElementById('gesamtZaehler').innerHTML = 
+            `<strong>Gesamt heute:</strong> ${gesamtSaetze} Sätze | ${gesamtGewicht} kg bewegt`;
+    }
+
+    function trainingAbschliessen() {
+        const log = JSON.parse(localStorage.getItem('logs')) || [];
+        const jetzt = new Date();
+        heutigesWorkout.forEach(item => log.push({
+            ...item,
+            id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+            datum: jetzt.toLocaleDateString('de-DE'),
+            datumISO: jetzt.toISOString().slice(0, 10)
+        }));
+        localStorage.setItem('logs', JSON.stringify(log));
+        location.reload();
+    }
+
+    // Ermittelt zu einem Log-Eintrag das Datum als Date-Objekt (auch für ältere Einträge ohne datumISO)
+    function parseLogDatum(l) {
+        if (l.datumISO) return new Date(l.datumISO);
+        const teile = (l.datum || '').split('.');
+        if (teile.length === 3) return new Date(`${teile[2]}-${teile[1]}-${teile[0]}`);
+        return new Date();
+    }
+
+    // Montag der Woche für ein gegebenes Datum
+    function wochenStart(datum) {
+        const d = new Date(datum);
+        const tag = (d.getDay() + 6) % 7; // Montag = 0
+        d.setDate(d.getDate() - tag);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+    
+    function zeigeHistorie() {
+        document.getElementById('wochenBereich').style.display = 'none';
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+
+        // Ältere Einträge ohne ID nachträglich mit einer ID versehen (für Bearbeiten/Löschen)
+        let idErgaenzt = false;
+        logs.forEach(l => { if (!l.id) { l.id = 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); idErgaenzt = true; } });
+        if (idErgaenzt) localStorage.setItem('logs', JSON.stringify(logs));
+
+        const b = document.getElementById('historienBereich');
+
+        if (!document.getElementById('historieFilter')) {
+            b.innerHTML = `
+                <h3>Historie</h3>
+                <select id="historieFilter" onchange="zeigeHistorie()"></select>
+                <div id="historieListe"></div>`;
+        }
+
+        const filterSelect = document.getElementById('historieFilter');
+        const bisherigeAuswahl = filterSelect.value;
+        const uebungen = [...new Set(logs.map(l => l.uebung))].sort();
+        filterSelect.innerHTML = '<option value="">Alle Übungen</option>' +
+            uebungen.map(u => `<option value="${u}">${u}</option>`).join('');
+        filterSelect.value = uebungen.includes(bisherigeAuswahl) ? bisherigeAuswahl : "";
+
+        const gefiltert = filterSelect.value ? logs.filter(l => l.uebung === filterSelect.value) : logs;
+
+        document.getElementById('historieListe').innerHTML = gefiltert.slice().reverse().map(l => `
+            <div style="padding:5px; border-bottom:1px solid #ccc;">
+                <strong>${l.datum} - ${l.uebung}</strong><br>
+                ${l.saetze.map(s => s.wdh+'x'+s.kg+'kg').join(' | ')}
+                <div style="margin-top:4px;">
+                    <button class="klein-btn" style="background:#2F6FE0;" onclick="historieBearbeiten('${l.id}')">✏️ Bearbeiten</button>
+                    <button class="klein-btn" style="background:#D9534F;" onclick="historieLoeschen('${l.id}')">🗑️ Löschen</button>
+                </div>
+            </div>`).join('')
+            || "<p>Keine Einträge für diese Auswahl.</p>";
+    }
+
+    function historieBearbeiten(id) {
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const eintrag = logs.find(l => l.id === id);
+        if (!eintrag) return;
+        const eingabe = prompt(`Sätze für "${eintrag.uebung}" (${eintrag.datum}) bearbeiten (Format: Wdh x kg, z.B. 10x40, 8x45):`, saetzeZuString(eintrag.saetze));
+        if (eingabe === null) return;
+        const neu = stringZuSaetze(eingabe);
+        if (neu.length === 0) { alert('Keine gültigen Sätze erkannt.'); return; }
+        eintrag.saetze = neu;
+        localStorage.setItem('logs', JSON.stringify(logs));
+        zeigeHistorie();
+    }
+
+    function historieLoeschen(id) {
+        if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+        let logs = JSON.parse(localStorage.getItem('logs')) || [];
+        logs = logs.filter(l => l.id !== id);
+        localStorage.setItem('logs', JSON.stringify(logs));
+        zeigeHistorie();
+    }
+
+    function zeigeWochenuebersicht() {
+        document.getElementById('historienBereich').innerHTML = '';
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const b = document.getElementById('wochenBereich');
+        b.style.display = 'block';
+
+        if (logs.length === 0) {
+            b.innerHTML = "<h3>Wochenübersicht</h3><p>Noch keine Daten vorhanden.</p>";
+            return;
+        }
+
+        const wochen = {};
+        logs.forEach(l => {
+            const start = wochenStart(parseLogDatum(l));
+            const key = start.toISOString().slice(0, 10);
+            if (!wochen[key]) wochen[key] = { start, gruppen: {} };
+            const gruppe = l.gruppe || findGruppe(l.uebung);
+            if (!wochen[key].gruppen[gruppe]) wochen[key].gruppen[gruppe] = { saetze: 0, volumen: 0 };
+            l.saetze.forEach(s => {
+                wochen[key].gruppen[gruppe].saetze++;
+                wochen[key].gruppen[gruppe].volumen += (s.wdh * s.kg);
+            });
+        });
+
+        const keysSortiert = Object.keys(wochen).sort().reverse();
+
+        b.innerHTML = "<h3>Wochenübersicht</h3>" + keysSortiert.map(key => {
+            const w = wochen[key];
+            const ende = new Date(w.start);
+            ende.setDate(ende.getDate() + 6);
+            const von = w.start.toLocaleDateString('de-DE');
+            const bis = ende.toLocaleDateString('de-DE');
+            const zeilen = Object.entries(w.gruppen)
+                .sort((a, b) => b[1].saetze - a[1].saetze)
+                .map(([g, werte]) => `<tr><td>${g}</td><td>${werte.saetze}</td><td>${werte.volumen} kg</td></tr>`)
+                .join('');
+            return `
+                <div class="info-box">
+                    <strong>${von} – ${bis}</strong>
+                    <table>
+                        <thead><tr><th>Muskelgruppe</th><th>Sätze</th><th>Volumen</th></tr></thead>
+                        <tbody>${zeilen}</tbody>
+                    </table>
+                </div>`;
+        }).join('');
+    }
+
+    function loescheDaten() { if(confirm("Alles löschen?")) { localStorage.removeItem('logs'); location.reload(); } }
+</script>
+</body>
+</html>
