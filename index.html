@@ -34,6 +34,12 @@
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9em; }
         th { background: #eee; }
         .sum-box { background: #333; color: white; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9em; }
+        .checkbox-gruppe { margin-bottom: 10px; }
+        .checkbox-gruppe-titel { font-weight: bold; font-size: 0.85em; margin: 8px 0 4px; color: #444; }
+        .checkbox-zeile { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.9em; }
+        .checkbox-zeile input { flex: none; width: auto; padding: 0; }
+        .plan-verwaltung-zeile { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .klein-btn { padding: 6px 10px; border-radius: 4px; border: none; font-size: 0.8em; font-weight: bold; cursor: pointer; color: white; }
     </style>
 <script>
       if ('serviceWorker' in navigator) {
@@ -47,6 +53,15 @@
 
 <div class="container">
     <h2>Gym Tracker</h2>
+
+    <div class="info-box" style="padding: 8px;">
+        <div style="font-size: 0.85em; font-weight: bold; margin-bottom: 6px;">Trainingsplan wählen:</div>
+        <div class="tabs" id="planContainer"></div>
+        <button class="main-btn" onclick="zeigePlanverwaltung()" style="background: #6f42c1; margin-top: 8px; font-size: 0.85em; padding: 8px;">Pläne verwalten</button>
+    </div>
+
+    <div id="planVerwaltungBereich" style="display:none;"></div>
+
     <div class="tabs" id="tabContainer"></div>
     <div id="gruppenContainer"></div>
 
@@ -89,9 +104,22 @@
         "Bauch": ["Crunch (Maschine)", "Rotationsmaschine"]
     };
 
+    // Trainingspläne werden jetzt in der App verwaltet und im localStorage gespeichert.
+    // Beim allerersten Start werden drei Beispielpläne angelegt, die danach frei bearbeitet werden können.
+    let plaene = JSON.parse(localStorage.getItem('plaene'));
+    if (!plaene) {
+        plaene = {
+            "Plan A – Push": ["Brustpresse (Maschine)", "Schulterpresse sitzend (Maschine)", "Trizepsdrücken mit dem Seil"],
+            "Plan B – Pull": ["Latzug (Maschine)", "Sitzendes Rudern am Kabelzug - V-Griff (Kabel)", "Bizepscurl (Maschine)"],
+            "Plan C – Beine": ["Beinpresse", "Beinstrecker sitzend", "Beinbeuger liegend"]
+        };
+        localStorage.setItem('plaene', JSON.stringify(plaene));
+    }
+
     let aktiveUebung = "";
     let aktuelleSätze = [];
     let heutigesWorkout = [];
+    let aktiverPlan = null;
 
     function findGruppe(uebung) {
         for (const g in datenbank) {
@@ -108,7 +136,45 @@
         tabContainer.appendChild(b);
     });
 
+    function renderPlanTabs() {
+        const planContainer = document.getElementById('planContainer');
+        planContainer.innerHTML = '';
+        Object.keys(plaene).forEach(p => {
+            let b = document.createElement('button');
+            b.className = 'tab-btn'; b.innerHTML = p;
+            b.onclick = () => zeigePlan(p, b);
+            planContainer.appendChild(b);
+        });
+    }
+    renderPlanTabs();
+
+    function zeigePlan(planName, btn) {
+        aktiverPlan = planName;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderPlanUebungen(planName);
+    }
+
+    function renderPlanUebungen(planName) {
+        const container = document.getElementById('gruppenContainer');
+        container.innerHTML = '';
+        (plaene[planName] || []).forEach(u => {
+            let b = document.createElement('button');
+            b.className = 'uebung-btn';
+            const erledigt = heutigesWorkout.some(w => w.uebung === u);
+            b.innerHTML = erledigt ? `✓ ${u}` : u;
+            if (erledigt) b.style.opacity = '0.6';
+            b.onclick = () => waehleUebung(u, b);
+            container.appendChild(b);
+        });
+        const hinweis = document.createElement('div');
+        hinweis.style.cssText = 'font-size:0.8em; color:#666; text-align:center; margin-top:8px;';
+        hinweis.textContent = 'Tipp: Oben eine Muskelgruppe wählen, um Übungen zu tauschen oder zu ergänzen.';
+        container.appendChild(hinweis);
+    }
+
     function zeigeGruppe(gruppe, btn) {
+        aktiverPlan = null;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const container = document.getElementById('gruppenContainer');
@@ -120,6 +186,90 @@
             b.onclick = () => waehleUebung(u, b);
             container.appendChild(b);
         });
+    }
+
+    let bearbeiteterPlanName = null;
+
+    function zeigePlanverwaltung() {
+        const b = document.getElementById('planVerwaltungBereich');
+        const wirdGeoeffnet = b.style.display === 'none';
+        if (!wirdGeoeffnet) { b.style.display = 'none'; return; }
+        b.style.display = 'block';
+        renderPlanverwaltungListe();
+    }
+
+    function renderPlanverwaltungListe() {
+        const b = document.getElementById('planVerwaltungBereich');
+        const zeilen = Object.keys(plaene).map(name => `
+            <div class="plan-verwaltung-zeile">
+                <span>${name} <span style="color:#999; font-size:0.8em;">(${plaene[name].length} Übungen)</span></span>
+                <span>
+                    <button class="klein-btn" style="background:#007bff;" onclick="planEditorOeffnen('${name.replace(/'/g, "\\'")}')">Bearbeiten</button>
+                    <button class="klein-btn" style="background:#dc3545;" onclick="planLoeschen('${name.replace(/'/g, "\\'")}')">Löschen</button>
+                </span>
+            </div>`).join('') || "<p>Noch keine Pläne angelegt.</p>";
+
+        b.innerHTML = `
+            <div class="info-box">
+                <h3 style="margin-top:0;">Pläne verwalten</h3>
+                ${zeilen}
+                <button class="main-btn" style="background:#28a745;" onclick="planEditorOeffnen()">+ Neuer Plan</button>
+                <div id="planEditor"></div>
+            </div>`;
+    }
+
+    function planEditorOeffnen(name) {
+        bearbeiteterPlanName = name || null;
+        const vorhandeneUebungen = name ? plaene[name] : [];
+
+        const gruppenHtml = Object.keys(datenbank).map(gruppe => `
+            <div class="checkbox-gruppe">
+                <div class="checkbox-gruppe-titel">${gruppe}</div>
+                ${datenbank[gruppe].map(u => `
+                    <label class="checkbox-zeile">
+                        <input type="checkbox" value="${u}" ${vorhandeneUebungen.includes(u) ? 'checked' : ''}>
+                        ${u}
+                    </label>`).join('')}
+            </div>`).join('');
+
+        document.getElementById('planEditor').innerHTML = `
+            <input type="text" id="planNameInput" placeholder="Plan-Name" value="${name ? name.replace(/"/g, '&quot;') : ''}" style="margin-top:10px;">
+            <div style="max-height: 260px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 8px;">
+                ${gruppenHtml}
+            </div>
+            <button class="main-btn" style="background:#28a745;" onclick="planSpeichern()">Speichern</button>
+            <button class="main-btn" style="background:#6c757d;" onclick="planEditorSchliessen()">Abbrechen</button>`;
+    }
+
+    function planEditorSchliessen() {
+        bearbeiteterPlanName = null;
+        document.getElementById('planEditor').innerHTML = '';
+    }
+
+    function planSpeichern() {
+        const name = document.getElementById('planNameInput').value.trim();
+        if (!name) { alert('Bitte einen Namen für den Plan eingeben.'); return; }
+
+        const ausgewaehlt = [...document.querySelectorAll('#planEditor input[type="checkbox"]:checked')].map(cb => cb.value);
+        if (ausgewaehlt.length === 0) { alert('Bitte mindestens eine Übung auswählen.'); return; }
+
+        if (bearbeiteterPlanName && bearbeiteterPlanName !== name) {
+            delete plaene[bearbeiteterPlanName];
+        }
+        plaene[name] = ausgewaehlt;
+        localStorage.setItem('plaene', JSON.stringify(plaene));
+
+        bearbeiteterPlanName = null;
+        renderPlanTabs();
+        renderPlanverwaltungListe();
+    }
+
+    function planLoeschen(name) {
+        if (!confirm(`Plan "${name}" wirklich löschen?`)) return;
+        delete plaene[name];
+        localStorage.setItem('plaene', JSON.stringify(plaene));
+        renderPlanTabs();
+        renderPlanverwaltungListe();
     }
 
     function waehleUebung(name, btn) {
@@ -167,6 +317,8 @@
         
         document.getElementById('eingabeBereich').style.display = 'none';
         document.querySelectorAll('.uebung-btn').forEach(b => b.classList.remove('active'));
+
+        if (aktiverPlan) renderPlanUebungen(aktiverPlan);
     }
 
     function updateGesamtZaehler() {
