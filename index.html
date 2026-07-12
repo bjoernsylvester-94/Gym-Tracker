@@ -12,34 +12,37 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="manifest" href="manifest.json">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 10px; background: #f4f4f9; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 10px; background: #F4F4F7; color: #1F2328; }
         .container { max-width: 500px; margin: auto; }
-        h2 { text-align: center; color: #222; }
-        .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 10px; }
-        .tab-btn { background: #ddd; border: none; padding: 8px 2px; border-radius: 4px; cursor: pointer; font-size: 0.8em; font-weight: bold; }
-        .tab-btn.active { background: #333; color: white; }
+        h2 { text-align: center; color: #1F2328; font-weight: 700; letter-spacing: -0.3px; }
+        .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+        .tab-btn { background: #EDEDF0; border: none; padding: 10px 4px; border-radius: 8px; cursor: pointer; font-size: 0.8em; font-weight: 600; color: #3A3F45; }
+        .tab-btn.active { background: #1F2328; color: white; }
         .uebung-grid { display: grid; gap: 6px; margin-bottom: 15px; }
-        .uebung-btn { background: white; border: 1px solid #ccc; padding: 10px; border-radius: 6px; cursor: pointer; text-align: left; width: 100%; }
-        .uebung-btn.active { border: 2px solid #28a745; background: #e8f5e9; font-weight: bold; }
+        .uebung-btn { background: white; border: 1px solid #E4E4E8; padding: 12px; border-radius: 10px; cursor: pointer; text-align: left; width: 100%; }
+        .uebung-btn.active { border: 2px solid #1F2328; background: #F0F1F2; color: #1F2328; font-weight: 600; }
+        .uebung-btn.done { border-color: #28a745; background: #F1FAF3; color: #1E7A34; font-weight: 600; }
         
         .input-row { display: flex; gap: 6px; align-items: center; margin-top: 10px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; margin-bottom: 8px; font-size: 0.9em; }
-        #add-btn { min-width: 50px; padding: 12px; border-radius: 6px; border:none; background:#333; color:white; font-weight:bold; cursor: pointer; }
+        input { flex: 1; padding: 12px; border: 1px solid #E4E4E8; border-radius: 8px; box-sizing: border-box; }
+        select { width: 100%; padding: 10px; border: 1px solid #E4E4E8; border-radius: 8px; box-sizing: border-box; margin-bottom: 8px; font-size: 0.9em; }
+        #add-btn { min-width: 50px; padding: 12px; border-radius: 8px; border:none; background:#1F2328; color:white; font-weight:bold; cursor: pointer; }
 
-        .main-btn { background: #333; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; margin-top: 8px; cursor: pointer; }
-        .info-box { background: #fff; padding: 10px; margin: 10px 0; border-radius: 6px; border-left: 4px solid #333; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .main-btn { background: #1F2328; color: white; border: none; padding: 13px; width: 100%; border-radius: 10px; font-weight: 600; margin-top: 8px; cursor: pointer; }
+        .info-box { background: #fff; padding: 12px; margin: 10px 0; border-radius: 12px; border: 1px solid #EDEDF0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .info-box-label { font-size: 0.78em; font-weight: 700; color: #8A8F98; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 6px; overflow: hidden; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9em; }
-        th { background: #eee; }
-        .sum-box { background: #333; color: white; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 10px; overflow: hidden; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #EDEDF0; font-size: 0.9em; }
+        th { background: #F4F4F7; }
+        .sum-box { background: #1F2328; color: white; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 0.9em; }
         .checkbox-gruppe { margin-bottom: 10px; }
         .checkbox-gruppe-titel { font-weight: bold; font-size: 0.85em; margin: 8px 0 4px; color: #444; }
         .checkbox-zeile { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.9em; }
         .checkbox-zeile input { flex: none; width: auto; padding: 0; }
-        .plan-verwaltung-zeile { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .klein-btn { padding: 6px 10px; border-radius: 4px; border: none; font-size: 0.8em; font-weight: bold; cursor: pointer; color: white; }
+        .plan-verwaltung-zeile { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #EDEDF0; }
+        .klein-btn { padding: 6px 10px; border-radius: 6px; border: none; font-size: 0.8em; font-weight: bold; cursor: pointer; color: white; }
+        .badge { display: inline-block; background: #2F6FE0; color: #fff; font-size: 0.7em; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; text-transform: none; }
     </style>
 <script>
       if ('serviceWorker' in navigator) {
@@ -55,9 +58,9 @@
     <h2>Gym Tracker</h2>
 
     <div class="info-box" style="padding: 8px;">
-        <div style="font-size: 0.85em; font-weight: bold; margin-bottom: 6px;">Trainingsplan wählen:</div>
+        <div class="info-box-label" id="planLabel">Trainingsplan wählen</div>
         <div class="tabs" id="planContainer"></div>
-        <button class="main-btn" onclick="zeigePlanverwaltung()" style="background: #6f42c1; margin-top: 8px; font-size: 0.85em; padding: 8px;">Pläne verwalten</button>
+        <button class="main-btn" onclick="zeigePlanverwaltung()" style="background: #6B7178; margin-top: 8px; font-size: 0.85em; padding: 8px;">Pläne verwalten</button>
     </div>
 
     <div id="planVerwaltungBereich" style="display:none;"></div>
@@ -85,10 +88,10 @@
         <div id="gesamtZaehler" class="sum-box"></div>
     </div>
 
-    <button class="main-btn" onclick="trainingAbschliessen()" style="background: #007bff;">Training beenden</button>
-    <button class="main-btn" onclick="zeigeHistorie()" style="background: #6c757d;">Historie anzeigen</button>
-    <button class="main-btn" onclick="zeigeWochenuebersicht()" style="background: #17a2b8;">Wochenübersicht</button>
-    <button class="main-btn" onclick="loescheDaten()" style="background: #dc3545;">Daten zurücksetzen</button>
+    <button class="main-btn" onclick="trainingAbschliessen()" style="background: #1F2328;">Training beenden</button>
+    <button class="main-btn" onclick="zeigeHistorie()" style="background: #6B7178;">Historie anzeigen</button>
+    <button class="main-btn" onclick="zeigeWochenuebersicht()" style="background: #2F6FE0;">Wochenübersicht</button>
+    <button class="main-btn" onclick="loescheDaten()" style="background: #D9534F;">Daten zurücksetzen</button>
     
     <div id="historienBereich"></div>
     <div id="wochenBereich" style="display:none;"></div>
@@ -162,10 +165,9 @@
         container.innerHTML = '';
         (plaene[planName] || []).forEach(u => {
             let b = document.createElement('button');
-            b.className = 'uebung-btn';
             const erledigt = heutigesWorkout.some(w => w.uebung === u);
+            b.className = erledigt ? 'uebung-btn done' : 'uebung-btn';
             b.innerHTML = erledigt ? `✓ ${u}` : u;
-            if (erledigt) b.style.opacity = '0.6';
             b.onclick = () => waehleUebung(u, b);
             container.appendChild(b);
         });
@@ -173,6 +175,15 @@
         hinweis.style.cssText = 'font-size:0.8em; color:#666; text-align:center; margin-top:8px;';
         hinweis.textContent = 'Tipp: Oben eine Muskelgruppe wählen, um Übungen zu tauschen oder zu ergänzen.';
         container.appendChild(hinweis);
+        updatePlanBadge();
+    }
+
+    function updatePlanBadge() {
+        const label = document.getElementById('planLabel');
+        if (!aktiverPlan) { label.innerHTML = 'Trainingsplan wählen'; return; }
+        const uebungen = plaene[aktiverPlan] || [];
+        const erledigt = uebungen.filter(u => heutigesWorkout.some(w => w.uebung === u)).length;
+        label.innerHTML = `Trainingsplan <span class="badge">${erledigt}/${uebungen.length} erledigt</span>`;
     }
 
     function zeigeGruppe(gruppe, btn) {
@@ -206,8 +217,8 @@
             <div class="plan-verwaltung-zeile">
                 <span>${name} <span style="color:#999; font-size:0.8em;">(${plaene[name].length} Übungen)</span></span>
                 <span>
-                    <button class="klein-btn" style="background:#007bff;" onclick="planEditorOeffnen('${name.replace(/'/g, "\\'")}')">Bearbeiten</button>
-                    <button class="klein-btn" style="background:#dc3545;" onclick="planLoeschen('${name.replace(/'/g, "\\'")}')">Löschen</button>
+                    <button class="klein-btn" style="background:#2F6FE0;" onclick="planEditorOeffnen('${name.replace(/'/g, "\\'")}')">Bearbeiten</button>
+                    <button class="klein-btn" style="background:#D9534F;" onclick="planLoeschen('${name.replace(/'/g, "\\'")}')">Löschen</button>
                 </span>
             </div>`).join('') || "<p>Noch keine Pläne angelegt.</p>";
 
@@ -313,8 +324,8 @@
             row.insertCell(0).innerHTML = item.uebung;
             row.insertCell(1).innerHTML = item.saetze.map(s => s.wdh + 'x' + s.kg + 'kg').join(', ');
             row.insertCell(2).innerHTML = `
-                <button class="klein-btn" style="background:#007bff;" onclick="heutigeUebungBearbeiten(${index})">✏️</button>
-                <button class="klein-btn" style="background:#dc3545;" onclick="heutigeUebungLoeschen(${index})">🗑️</button>`;
+                <button class="klein-btn" style="background:#2F6FE0;" onclick="heutigeUebungBearbeiten(${index})">✏️</button>
+                <button class="klein-btn" style="background:#D9534F;" onclick="heutigeUebungLoeschen(${index})">🗑️</button>`;
         });
     }
 
@@ -338,6 +349,7 @@
         heutigesWorkout[index].saetze = neu;
         renderHeutigesWorkout();
         updateGesamtZaehler();
+        updatePlanBadge();
         if (aktuelleAnsicht === 'plan' && aktiverPlan) renderPlanUebungen(aktiverPlan);
     }
 
@@ -346,6 +358,7 @@
         heutigesWorkout.splice(index, 1);
         renderHeutigesWorkout();
         updateGesamtZaehler();
+        updatePlanBadge();
         if (heutigesWorkout.length === 0) document.getElementById('heutigesWorkoutLog').style.display = 'none';
         if (aktuelleAnsicht === 'plan' && aktiverPlan) renderPlanUebungen(aktiverPlan);
     }
@@ -370,6 +383,7 @@
         }
 
         if (aktuelleAnsicht === 'plan' && aktiverPlan) renderPlanUebungen(aktiverPlan);
+        else updatePlanBadge();
     }
 
     function updateGesamtZaehler() {
@@ -381,148 +395,4 @@
                 gesamtGewicht += (s.wdh * s.kg);
             });
         });
-        document.getElementById('gesamtZaehler').innerHTML = 
-            `<strong>Gesamt heute:</strong> ${gesamtSaetze} Sätze | ${gesamtGewicht} kg bewegt`;
-    }
-
-    function trainingAbschliessen() {
-        const log = JSON.parse(localStorage.getItem('logs')) || [];
-        const jetzt = new Date();
-        heutigesWorkout.forEach(item => log.push({
-            ...item,
-            id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-            datum: jetzt.toLocaleDateString('de-DE'),
-            datumISO: jetzt.toISOString().slice(0, 10)
-        }));
-        localStorage.setItem('logs', JSON.stringify(log));
-        location.reload();
-    }
-
-    // Ermittelt zu einem Log-Eintrag das Datum als Date-Objekt (auch für ältere Einträge ohne datumISO)
-    function parseLogDatum(l) {
-        if (l.datumISO) return new Date(l.datumISO);
-        const teile = (l.datum || '').split('.');
-        if (teile.length === 3) return new Date(`${teile[2]}-${teile[1]}-${teile[0]}`);
-        return new Date();
-    }
-
-    // Montag der Woche für ein gegebenes Datum
-    function wochenStart(datum) {
-        const d = new Date(datum);
-        const tag = (d.getDay() + 6) % 7; // Montag = 0
-        d.setDate(d.getDate() - tag);
-        d.setHours(0, 0, 0, 0);
-        return d;
-    }
-    
-    function zeigeHistorie() {
-        document.getElementById('wochenBereich').style.display = 'none';
-        const logs = JSON.parse(localStorage.getItem('logs')) || [];
-
-        // Ältere Einträge ohne ID nachträglich mit einer ID versehen (für Bearbeiten/Löschen)
-        let idErgaenzt = false;
-        logs.forEach(l => { if (!l.id) { l.id = 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); idErgaenzt = true; } });
-        if (idErgaenzt) localStorage.setItem('logs', JSON.stringify(logs));
-
-        const b = document.getElementById('historienBereich');
-
-        if (!document.getElementById('historieFilter')) {
-            b.innerHTML = `
-                <h3>Historie</h3>
-                <select id="historieFilter" onchange="zeigeHistorie()"></select>
-                <div id="historieListe"></div>`;
-        }
-
-        const filterSelect = document.getElementById('historieFilter');
-        const bisherigeAuswahl = filterSelect.value;
-        const uebungen = [...new Set(logs.map(l => l.uebung))].sort();
-        filterSelect.innerHTML = '<option value="">Alle Übungen</option>' +
-            uebungen.map(u => `<option value="${u}">${u}</option>`).join('');
-        filterSelect.value = uebungen.includes(bisherigeAuswahl) ? bisherigeAuswahl : "";
-
-        const gefiltert = filterSelect.value ? logs.filter(l => l.uebung === filterSelect.value) : logs;
-
-        document.getElementById('historieListe').innerHTML = gefiltert.slice().reverse().map(l => `
-            <div style="padding:5px; border-bottom:1px solid #ccc;">
-                <strong>${l.datum} - ${l.uebung}</strong><br>
-                ${l.saetze.map(s => s.wdh+'x'+s.kg+'kg').join(' | ')}
-                <div style="margin-top:4px;">
-                    <button class="klein-btn" style="background:#007bff;" onclick="historieBearbeiten('${l.id}')">✏️ Bearbeiten</button>
-                    <button class="klein-btn" style="background:#dc3545;" onclick="historieLoeschen('${l.id}')">🗑️ Löschen</button>
-                </div>
-            </div>`).join('')
-            || "<p>Keine Einträge für diese Auswahl.</p>";
-    }
-
-    function historieBearbeiten(id) {
-        const logs = JSON.parse(localStorage.getItem('logs')) || [];
-        const eintrag = logs.find(l => l.id === id);
-        if (!eintrag) return;
-        const eingabe = prompt(`Sätze für "${eintrag.uebung}" (${eintrag.datum}) bearbeiten (Format: Wdh x kg, z.B. 10x40, 8x45):`, saetzeZuString(eintrag.saetze));
-        if (eingabe === null) return;
-        const neu = stringZuSaetze(eingabe);
-        if (neu.length === 0) { alert('Keine gültigen Sätze erkannt.'); return; }
-        eintrag.saetze = neu;
-        localStorage.setItem('logs', JSON.stringify(logs));
-        zeigeHistorie();
-    }
-
-    function historieLoeschen(id) {
-        if (!confirm('Diesen Eintrag wirklich löschen?')) return;
-        let logs = JSON.parse(localStorage.getItem('logs')) || [];
-        logs = logs.filter(l => l.id !== id);
-        localStorage.setItem('logs', JSON.stringify(logs));
-        zeigeHistorie();
-    }
-
-    function zeigeWochenuebersicht() {
-        document.getElementById('historienBereich').innerHTML = '';
-        const logs = JSON.parse(localStorage.getItem('logs')) || [];
-        const b = document.getElementById('wochenBereich');
-        b.style.display = 'block';
-
-        if (logs.length === 0) {
-            b.innerHTML = "<h3>Wochenübersicht</h3><p>Noch keine Daten vorhanden.</p>";
-            return;
-        }
-
-        const wochen = {};
-        logs.forEach(l => {
-            const start = wochenStart(parseLogDatum(l));
-            const key = start.toISOString().slice(0, 10);
-            if (!wochen[key]) wochen[key] = { start, gruppen: {} };
-            const gruppe = l.gruppe || findGruppe(l.uebung);
-            if (!wochen[key].gruppen[gruppe]) wochen[key].gruppen[gruppe] = { saetze: 0, volumen: 0 };
-            l.saetze.forEach(s => {
-                wochen[key].gruppen[gruppe].saetze++;
-                wochen[key].gruppen[gruppe].volumen += (s.wdh * s.kg);
-            });
-        });
-
-        const keysSortiert = Object.keys(wochen).sort().reverse();
-
-        b.innerHTML = "<h3>Wochenübersicht</h3>" + keysSortiert.map(key => {
-            const w = wochen[key];
-            const ende = new Date(w.start);
-            ende.setDate(ende.getDate() + 6);
-            const von = w.start.toLocaleDateString('de-DE');
-            const bis = ende.toLocaleDateString('de-DE');
-            const zeilen = Object.entries(w.gruppen)
-                .sort((a, b) => b[1].saetze - a[1].saetze)
-                .map(([g, werte]) => `<tr><td>${g}</td><td>${werte.saetze}</td><td>${werte.volumen} kg</td></tr>`)
-                .join('');
-            return `
-                <div class="info-box">
-                    <strong>${von} – ${bis}</strong>
-                    <table>
-                        <thead><tr><th>Muskelgruppe</th><th>Sätze</th><th>Volumen</th></tr></thead>
-                        <tbody>${zeilen}</tbody>
-                    </table>
-                </div>`;
-        }).join('');
-    }
-
-    function loescheDaten() { if(confirm("Alles löschen?")) { localStorage.removeItem('logs'); location.reload(); } }
-</script>
-</body>
-</html>
+        document.getElement
