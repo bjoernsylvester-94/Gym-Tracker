@@ -43,6 +43,8 @@
         .plan-verwaltung-zeile { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #EDEDF0; }
         .klein-btn { padding: 6px 10px; border-radius: 6px; border: none; font-size: 0.8em; font-weight: bold; cursor: pointer; color: white; }
         .badge { display: inline-block; background: #2F6FE0; color: #fff; font-size: 0.7em; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; text-transform: none; }
+        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #1F2328; color: #fff; padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 14px rgba(0,0,0,0.25); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; white-space: nowrap; }
+        .toast.show { opacity: 1; }
     </style>
 <script>
       if ('serviceWorker' in navigator) {
@@ -53,6 +55,8 @@
     </head>
 
 <body>
+
+<div id="toast" class="toast"></div>
 
 <div class="container">
     <h2>Gym Tracker</h2>
@@ -91,6 +95,13 @@
     <button class="main-btn" onclick="trainingAbschliessen()" style="background: #1F2328;">Training beenden</button>
     <button class="main-btn" onclick="zeigeHistorie()" style="background: #6B7178;">Historie anzeigen</button>
     <button class="main-btn" onclick="zeigeWochenuebersicht()" style="background: #2F6FE0;">Wochenübersicht</button>
+
+    <div style="display:flex; gap:8px;">
+        <button class="main-btn" onclick="datenExportieren()" style="background: #6B7178; flex:1;">Daten exportieren</button>
+        <button class="main-btn" onclick="document.getElementById('importFile').click()" style="background: #6B7178; flex:1;">Daten importieren</button>
+    </div>
+    <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="datenImportieren(event)">
+
     <button class="main-btn" onclick="loescheDaten()" style="background: #D9534F;">Daten zurücksetzen</button>
     
     <div id="historienBereich"></div>
@@ -130,6 +141,23 @@
             if (datenbank[g].includes(uebung)) return g;
         }
         return "Sonstige";
+    }
+
+    function zeigeToast(text) {
+        const t = document.getElementById('toast');
+        t.textContent = text;
+        t.classList.add('show');
+        clearTimeout(window._toastTimeout);
+        window._toastTimeout = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // Prüft, ob in den neuen Sätzen ein höheres Gewicht steckt als je zuvor bei dieser Übung
+    function pruefeBestleistung(uebung, saetze) {
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const bisherigeGewichte = logs.filter(l => l.uebung === uebung).flatMap(l => l.saetze.map(s => s.kg));
+        const bisherigesMax = bisherigeGewichte.length ? Math.max(...bisherigeGewichte) : 0;
+        const neuesMax = Math.max(...saetze.map(s => s.kg));
+        return neuesMax > bisherigesMax ? neuesMax : null;
     }
 
     const tabContainer = document.getElementById('tabContainer');
@@ -365,6 +393,9 @@
 
     function speichern() {
         if(aktuelleSätze.length === 0) return;
+
+        const neueBestleistung = pruefeBestleistung(aktiveUebung, aktuelleSätze);
+
         heutigesWorkout.push({uebung: aktiveUebung, gruppe: findGruppe(aktiveUebung), saetze: [...aktuelleSätze]});
         
         document.getElementById('heutigesWorkoutLog').style.display = 'block';
@@ -373,6 +404,10 @@
         
         document.getElementById('eingabeBereich').style.display = 'none';
         document.querySelectorAll('.uebung-btn').forEach(b => b.classList.remove('active'));
+
+        if (neueBestleistung !== null) {
+            zeigeToast(`🏆 Neue Bestleistung: ${neueBestleistung} kg!`);
+        }
 
         // Manuell (über eine Muskelgruppe) hinzugefügte Übung, die nicht Teil des aktiven Plans ist: optional dauerhaft übernehmen
         if (aktiverPlan && !(plaene[aktiverPlan] || []).includes(aktiveUebung)) {
@@ -534,6 +569,43 @@
                     </table>
                 </div>`;
         }).join('');
+    }
+
+    function datenExportieren() {
+        const daten = {
+            logs: JSON.parse(localStorage.getItem('logs')) || [],
+            plaene: JSON.parse(localStorage.getItem('plaene')) || {}
+        };
+        const blob = new Blob([JSON.stringify(daten, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `gym-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function datenImportieren(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            try {
+                const daten = JSON.parse(e.target.result);
+                if (!daten.logs && !daten.plaene) { alert('Das sieht nicht nach einer gültigen Backup-Datei aus.'); return; }
+                if (!confirm('Import überschreibt die aktuellen Trainingsdaten und Pläne auf diesem Gerät. Fortfahren?')) return;
+                if (daten.logs) localStorage.setItem('logs', JSON.stringify(daten.logs));
+                if (daten.plaene) localStorage.setItem('plaene', JSON.stringify(daten.plaene));
+                alert('Import erfolgreich!');
+                location.reload();
+            } catch (err) {
+                alert('Datei konnte nicht gelesen werden. Ist es eine gültige Backup-Datei?');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
     }
 
     function loescheDaten() { if(confirm("Alles löschen?")) { localStorage.removeItem('logs'); location.reload(); } }
