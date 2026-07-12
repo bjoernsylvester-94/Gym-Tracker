@@ -79,7 +79,7 @@
     <div id="heutigesWorkoutLog" style="display:none;">
         <h3>Heute bereits trainiert:</h3>
         <table id="workoutTable">
-            <thead><tr><th>Übung</th><th>Sätze</th></tr></thead>
+            <thead><tr><th>Übung</th><th>Sätze</th><th></th></tr></thead>
             <tbody></tbody>
         </table>
         <div id="gesamtZaehler" class="sum-box"></div>
@@ -96,11 +96,11 @@
 
 <script>
     const datenbank = {
-        "Brust": ["Brustpresse (Maschine)", "Butterfly (Maschine)", "Cable Crossovers (Flys)", "Schrägbankdrücken (Smith Machine)", "Iso-Laterales Bankdrücken"],
+        "Brust": ["Brustpresse (Maschine)", "Butterfly (Maschine)", "Cable Crossovers (Flys)", "Schrägbankdrücken (Smith Machine)"],
         "Rücken": ["Iso-Laterales Rudern", "Latzug (Maschine)", "Latzug Kabelzug", "Rückenstrecken (Maschine)", "Sitzendes Rudern am Kabelzug - V-Griff (Kabel)"],
         "Beine": ["Beinbeuger liegend", "Beinpresse", "Beinstrecker sitzend", "Hackenschmidt Squat (Maschine)"],
         "Schultern": ["Schulterpresse sitzend (Maschine)", "Seitheben (Maschine)", "Reverse Butterfly (Maschine)"],
-        "Arme": ["Bizepscurl (Maschine)", "Hammer Curl (Kurzhantel)", "Trizepsdrücken mit dem Seil", "einarmiges Trizepsdrücken", "Trizepsstrecken"],
+        "Arme": ["Bizepscurl (Maschine)", "Hammer Curl (Kurzhantel)", "Trizepsdrücken mit dem Seil"],
         "Bauch": ["Crunch (Maschine)", "Rotationsmaschine"]
     };
 
@@ -120,6 +120,7 @@
     let aktuelleSätze = [];
     let heutigesWorkout = [];
     let aktiverPlan = null;
+    let aktuelleAnsicht = null; // 'plan' oder 'gruppe' – getrennt vom aktiverPlan, damit der Plan-Kontext beim Stöbern in Muskelgruppen erhalten bleibt
 
     function findGruppe(uebung) {
         for (const g in datenbank) {
@@ -150,6 +151,7 @@
 
     function zeigePlan(planName, btn) {
         aktiverPlan = planName;
+        aktuelleAnsicht = 'plan';
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         renderPlanUebungen(planName);
@@ -174,7 +176,7 @@
     }
 
     function zeigeGruppe(gruppe, btn) {
-        aktiverPlan = null;
+        aktuelleAnsicht = 'gruppe';
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const container = document.getElementById('gruppenContainer');
@@ -303,22 +305,71 @@
         document.getElementById('wdh').value = ''; document.getElementById('kg').value = '';
     }
 
+    function renderHeutigesWorkout() {
+        const tableBody = document.querySelector('#workoutTable tbody');
+        tableBody.innerHTML = '';
+        heutigesWorkout.forEach((item, index) => {
+            const row = tableBody.insertRow();
+            row.insertCell(0).innerHTML = item.uebung;
+            row.insertCell(1).innerHTML = item.saetze.map(s => s.wdh + 'x' + s.kg + 'kg').join(', ');
+            row.insertCell(2).innerHTML = `
+                <button class="klein-btn" style="background:#007bff;" onclick="heutigeUebungBearbeiten(${index})">✏️</button>
+                <button class="klein-btn" style="background:#dc3545;" onclick="heutigeUebungLoeschen(${index})">🗑️</button>`;
+        });
+    }
+
+    function saetzeZuString(saetze) {
+        return saetze.map(s => `${s.wdh}x${s.kg}`).join(', ');
+    }
+
+    function stringZuSaetze(str) {
+        return str.split(',').map(t => t.trim()).filter(Boolean).map(t => {
+            const teile = t.toLowerCase().replace('kg', '').split('x').map(x => parseFloat(x.trim()));
+            return { wdh: teile[0] || 0, kg: teile[1] || 0 };
+        }).filter(s => s.wdh > 0);
+    }
+
+    function heutigeUebungBearbeiten(index) {
+        const item = heutigesWorkout[index];
+        const eingabe = prompt(`Sätze für "${item.uebung}" bearbeiten (Format: Wdh x kg, z.B. 10x40, 8x45):`, saetzeZuString(item.saetze));
+        if (eingabe === null) return;
+        const neu = stringZuSaetze(eingabe);
+        if (neu.length === 0) { alert('Keine gültigen Sätze erkannt.'); return; }
+        heutigesWorkout[index].saetze = neu;
+        renderHeutigesWorkout();
+        updateGesamtZaehler();
+        if (aktuelleAnsicht === 'plan' && aktiverPlan) renderPlanUebungen(aktiverPlan);
+    }
+
+    function heutigeUebungLoeschen(index) {
+        if (!confirm(`"${heutigesWorkout[index].uebung}" aus dem heutigen Training entfernen?`)) return;
+        heutigesWorkout.splice(index, 1);
+        renderHeutigesWorkout();
+        updateGesamtZaehler();
+        if (heutigesWorkout.length === 0) document.getElementById('heutigesWorkoutLog').style.display = 'none';
+        if (aktuelleAnsicht === 'plan' && aktiverPlan) renderPlanUebungen(aktiverPlan);
+    }
+
     function speichern() {
         if(aktuelleSätze.length === 0) return;
         heutigesWorkout.push({uebung: aktiveUebung, gruppe: findGruppe(aktiveUebung), saetze: [...aktuelleSätze]});
         
         document.getElementById('heutigesWorkoutLog').style.display = 'block';
-        const tableBody = document.querySelector('#workoutTable tbody');
-        const row = tableBody.insertRow();
-        row.insertCell(0).innerHTML = aktiveUebung;
-        row.insertCell(1).innerHTML = aktuelleSätze.map(s => s.wdh+'x'+s.kg+'kg').join(', ');
-        
+        renderHeutigesWorkout();
         updateGesamtZaehler();
         
         document.getElementById('eingabeBereich').style.display = 'none';
         document.querySelectorAll('.uebung-btn').forEach(b => b.classList.remove('active'));
 
-        if (aktiverPlan) renderPlanUebungen(aktiverPlan);
+        // Manuell (über eine Muskelgruppe) hinzugefügte Übung, die nicht Teil des aktiven Plans ist: optional dauerhaft übernehmen
+        if (aktiverPlan && !(plaene[aktiverPlan] || []).includes(aktiveUebung)) {
+            if (confirm(`"${aktiveUebung}" ist nicht Teil von "${aktiverPlan}". Dauerhaft zum Plan hinzufügen?`)) {
+                plaene[aktiverPlan].push(aktiveUebung);
+                localStorage.setItem('plaene', JSON.stringify(plaene));
+            }
+        }
+
+        if (aktuelleAnsicht === 'plan' && aktiverPlan) renderPlanUebungen(aktiverPlan);
     }
 
     function updateGesamtZaehler() {
@@ -339,6 +390,7 @@
         const jetzt = new Date();
         heutigesWorkout.forEach(item => log.push({
             ...item,
+            id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
             datum: jetzt.toLocaleDateString('de-DE'),
             datumISO: jetzt.toISOString().slice(0, 10)
         }));
@@ -366,6 +418,12 @@
     function zeigeHistorie() {
         document.getElementById('wochenBereich').style.display = 'none';
         const logs = JSON.parse(localStorage.getItem('logs')) || [];
+
+        // Ältere Einträge ohne ID nachträglich mit einer ID versehen (für Bearbeiten/Löschen)
+        let idErgaenzt = false;
+        logs.forEach(l => { if (!l.id) { l.id = 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); idErgaenzt = true; } });
+        if (idErgaenzt) localStorage.setItem('logs', JSON.stringify(logs));
+
         const b = document.getElementById('historienBereich');
 
         if (!document.getElementById('historieFilter')) {
@@ -384,9 +442,37 @@
 
         const gefiltert = filterSelect.value ? logs.filter(l => l.uebung === filterSelect.value) : logs;
 
-        document.getElementById('historieListe').innerHTML = gefiltert.slice().reverse().map(l =>
-            `<div style="padding:5px; border-bottom:1px solid #ccc;"><strong>${l.datum} - ${l.uebung}</strong><br>${l.saetze.map(s => s.wdh+'x'+s.kg+'kg').join(' | ')}</div>`).join('')
+        document.getElementById('historieListe').innerHTML = gefiltert.slice().reverse().map(l => `
+            <div style="padding:5px; border-bottom:1px solid #ccc;">
+                <strong>${l.datum} - ${l.uebung}</strong><br>
+                ${l.saetze.map(s => s.wdh+'x'+s.kg+'kg').join(' | ')}
+                <div style="margin-top:4px;">
+                    <button class="klein-btn" style="background:#007bff;" onclick="historieBearbeiten('${l.id}')">✏️ Bearbeiten</button>
+                    <button class="klein-btn" style="background:#dc3545;" onclick="historieLoeschen('${l.id}')">🗑️ Löschen</button>
+                </div>
+            </div>`).join('')
             || "<p>Keine Einträge für diese Auswahl.</p>";
+    }
+
+    function historieBearbeiten(id) {
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const eintrag = logs.find(l => l.id === id);
+        if (!eintrag) return;
+        const eingabe = prompt(`Sätze für "${eintrag.uebung}" (${eintrag.datum}) bearbeiten (Format: Wdh x kg, z.B. 10x40, 8x45):`, saetzeZuString(eintrag.saetze));
+        if (eingabe === null) return;
+        const neu = stringZuSaetze(eingabe);
+        if (neu.length === 0) { alert('Keine gültigen Sätze erkannt.'); return; }
+        eintrag.saetze = neu;
+        localStorage.setItem('logs', JSON.stringify(logs));
+        zeigeHistorie();
+    }
+
+    function historieLoeschen(id) {
+        if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+        let logs = JSON.parse(localStorage.getItem('logs')) || [];
+        logs = logs.filter(l => l.id !== id);
+        localStorage.setItem('logs', JSON.stringify(logs));
+        zeigeHistorie();
     }
 
     function zeigeWochenuebersicht() {
