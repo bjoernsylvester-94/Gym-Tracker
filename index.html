@@ -135,6 +135,15 @@
     let heutigesWorkout = [];
     let aktiverPlan = null;
     let aktuelleAnsicht = null; // 'plan' oder 'gruppe' – getrennt vom aktiverPlan, damit der Plan-Kontext beim Stöbern in Muskelgruppen erhalten bleibt
+    let trainingsStart = null;
+
+    function formatDauer(minuten) {
+        if (minuten === undefined || minuten === null) return '';
+        if (minuten < 60) return `${minuten} Min`;
+        const std = Math.floor(minuten / 60);
+        const rest = minuten % 60;
+        return rest > 0 ? `${std} Std ${rest} Min` : `${std} Std`;
+    }
 
     function findGruppe(uebung) {
         for (const g in datenbank) {
@@ -396,6 +405,8 @@
 
         const neueBestleistung = pruefeBestleistung(aktiveUebung, aktuelleSätze);
 
+        if (!trainingsStart) trainingsStart = new Date();
+
         heutigesWorkout.push({uebung: aktiveUebung, gruppe: findGruppe(aktiveUebung), saetze: [...aktuelleSätze]});
         
         document.getElementById('heutigesWorkoutLog').style.display = 'block';
@@ -430,22 +441,28 @@
                 gesamtGewicht += (s.wdh * s.kg);
             });
         });
+        const dauerText = trainingsStart ? ` | seit ${formatDauer(Math.round((new Date() - trainingsStart) / 60000))}` : '';
         document.getElementById('gesamtZaehler').innerHTML = 
-            `<strong>Gesamt heute:</strong> ${gesamtSaetze} Sätze | ${gesamtGewicht} kg bewegt`;
+            `<strong>Gesamt heute:</strong> ${gesamtSaetze} Sätze | ${gesamtGewicht} kg bewegt${dauerText}`;
     }
 
     function trainingAbschliessen() {
         const log = JSON.parse(localStorage.getItem('logs')) || [];
         const jetzt = new Date();
+        const dauerMinuten = trainingsStart ? Math.max(1, Math.round((jetzt - trainingsStart) / 60000)) : null;
         heutigesWorkout.forEach(item => log.push({
             ...item,
             id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
             datum: jetzt.toLocaleDateString('de-DE'),
-            datumISO: jetzt.toISOString().slice(0, 10)
+            datumISO: jetzt.toISOString().slice(0, 10),
+            dauerMinuten
         }));
         localStorage.setItem('logs', JSON.stringify(log));
         location.reload();
     }
+
+    // Dauer-Anzeige tickt auch ohne neue Eingabe mit
+    setInterval(() => { if (trainingsStart) updateGesamtZaehler(); }, 60000);
 
     // Ermittelt zu einem Log-Eintrag das Datum als Date-Objekt (auch für ältere Einträge ohne datumISO)
     function parseLogDatum(l) {
@@ -493,7 +510,7 @@
 
         document.getElementById('historieListe').innerHTML = gefiltert.slice().reverse().map(l => `
             <div style="padding:5px; border-bottom:1px solid #ccc;">
-                <strong>${l.datum} - ${l.uebung}</strong><br>
+                <strong>${l.datum} - ${l.uebung}</strong>${l.dauerMinuten ? ` <span style="color:#8A8F98; font-size:0.8em; font-weight:400;">(Training: ${formatDauer(l.dauerMinuten)})</span>` : ''}<br>
                 ${l.saetze.map(s => s.wdh+'x'+s.kg+'kg').join(' | ')}
                 <div style="margin-top:4px;">
                     <button class="klein-btn" style="background:#2F6FE0;" onclick="historieBearbeiten('${l.id}')">✏️ Bearbeiten</button>
