@@ -7,61 +7,62 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0F1115">
     <meta name="apple-mobile-web-app-title" content="Gym Tracker">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="manifest" href="manifest.json">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 10px; background: #F4F4F7; color: #1F2328; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 10px; background: #0F1115; color: #E8E9EB; }
         .container { max-width: 500px; margin: auto; }
-        h2 { text-align: center; color: #1F2328; font-weight: 700; letter-spacing: -0.3px; }
+        h2 { text-align: center; color: #fff; font-weight: 700; letter-spacing: -0.3px; }
         .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
-        .tab-btn { background: #EDEDF0; border: none; padding: 10px 4px; border-radius: 8px; cursor: pointer; font-size: 0.8em; font-weight: 600; color: #3A3F45; }
-        .tab-btn.active { background: #1F2328; color: white; }
+        .tab-btn { background: #21252C; border: none; padding: 10px 4px; border-radius: 10px; cursor: pointer; font-size: 0.8em; font-weight: 600; color: #C7CAD1; }
+        .tab-btn.active { background: linear-gradient(135deg, #8A6D2E, #C9A34A); color: #fff; box-shadow: 0 0 12px rgba(138,109,46,0.35); }
         .uebung-grid { display: grid; gap: 6px; margin-bottom: 15px; }
-        .uebung-btn { background: white; border: 1px solid #E4E4E8; padding: 12px; border-radius: 10px; cursor: pointer; text-align: left; width: 100%; }
-        .uebung-btn.active { border: 2px solid #1F2328; background: #F0F1F2; color: #1F2328; font-weight: 600; }
-        .uebung-btn.done { border-color: #28a745; background: #F1FAF3; color: #1E7A34; font-weight: 600; }
+        .uebung-btn { background: #191C21; border: 1px solid #262A31; padding: 12px; border-radius: 12px; cursor: pointer; text-align: left; width: 100%; color: #E8E9EB; }
+        .uebung-btn.active { border: 2px solid #C9A34A; background: #23200F; color: #E8C170; font-weight: 600; }
+        .uebung-btn.done { border-color: #2FA85A; background: #14201A; color: #6FCF97; font-weight: 600; }
         
         .input-row { display: flex; gap: 6px; align-items: center; margin-top: 10px; }
-        input { flex: 1; padding: 12px; border: 1px solid #E4E4E8; border-radius: 8px; box-sizing: border-box; }
-        select { width: 100%; padding: 10px; border: 1px solid #E4E4E8; border-radius: 8px; box-sizing: border-box; margin-bottom: 8px; font-size: 0.9em; }
-        #add-btn { min-width: 50px; padding: 12px; border-radius: 8px; border:none; background:#1F2328; color:white; font-weight:bold; cursor: pointer; }
+        input { flex: 1; padding: 12px; border: 1px solid #2A2E35; border-radius: 8px; box-sizing: border-box; background: #191C21; color: #E8E9EB; }
+        select { width: 100%; padding: 10px; border: 1px solid #2A2E35; border-radius: 8px; box-sizing: border-box; margin-bottom: 8px; font-size: 0.9em; background: #191C21; color: #E8E9EB; }
+        #add-btn { min-width: 50px; padding: 12px; border-radius: 8px; border:none; background: linear-gradient(135deg, #8A6D2E, #C9A34A); color:white; font-weight:bold; cursor: pointer; }
 
-        .main-btn { background: #1F2328; color: white; border: none; padding: 13px; width: 100%; border-radius: 10px; font-weight: 600; margin-top: 8px; cursor: pointer; }
-        .info-box { background: #fff; padding: 12px; margin: 10px 0; border-radius: 12px; border: 1px solid #EDEDF0; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .main-btn { border: none; padding: 13px; width: 100%; border-radius: 12px; font-weight: 700; margin-top: 8px; cursor: pointer; color: #fff; box-sizing: border-box; }
+        .info-box { background: #191C21; padding: 12px; margin: 10px 0; border-radius: 14px; border: 1px solid #262A31; }
         .info-box-label { font-size: 0.78em; font-weight: 700; color: #8A8F98; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; border-radius: 10px; overflow: hidden; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #EDEDF0; font-size: 0.9em; }
-        th { background: #F4F4F7; }
-        .sum-box { background: #1F2328; color: white; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #191C21; border-radius: 12px; overflow: hidden; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #262A31; font-size: 0.9em; color: #E8E9EB; }
+        th { background: #21252C; color: #8A8F98; }
+        .sum-box { background: linear-gradient(135deg, #8A6D2E, #C9A34A); color: white; padding: 10px; border-radius: 10px; margin-top: 10px; font-size: 0.9em; }
         .checkbox-gruppe { margin-bottom: 10px; }
-        .checkbox-gruppe-titel { font-weight: bold; font-size: 0.85em; margin: 8px 0 4px; color: #444; }
-        .checkbox-zeile { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.9em; }
+        .checkbox-gruppe-titel { font-weight: bold; font-size: 0.85em; margin: 8px 0 4px; color: #C7CAD1; }
+        .checkbox-zeile { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.9em; color: #E8E9EB; }
         .checkbox-zeile input { flex: none; width: auto; padding: 0; }
-        .plan-verwaltung-zeile { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #EDEDF0; }
+        .plan-verwaltung-zeile { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #262A31; }
         .klein-btn { padding: 6px 10px; border-radius: 6px; border: none; font-size: 0.8em; font-weight: bold; cursor: pointer; color: white; }
-        .badge { display: inline-block; background: #2F6FE0; color: #fff; font-size: 0.7em; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; text-transform: none; }
-        .chip { display: inline-block; background: #EDEDF0; color: #3A3F45; font-size: 0.78em; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin: 2px 4px 2px 0; }
+        .badge { display: inline-block; background: linear-gradient(135deg, #8A6D2E, #C9A34A); color: #fff; font-size: 0.7em; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; text-transform: none; }
+        .chip { display: inline-block; background: #21252C; color: #C7CAD1; font-size: 0.78em; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin: 2px 4px 2px 0; }
         .tag-uebungen { display: flex; flex-wrap: wrap; gap: 6px; }
-        .uebung-chip { background: #EDEDF0; border-radius: 10px; padding: 6px 10px; }
-        .uebung-chip-name { font-size: 0.78em; font-weight: 700; color: #1F2328; }
-        .uebung-chip-saetze { font-size: 0.72em; color: #6B7178; margin-top: 1px; }
-        .historie-tag { background: #fff; border: 1px solid #EDEDF0; border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
-        .historie-tag summary { padding: 12px; font-weight: 700; cursor: pointer; list-style: none; }
+        .uebung-chip { background: #21252C; border-radius: 10px; padding: 6px 10px; }
+        .uebung-chip-name { font-size: 0.78em; font-weight: 700; color: #E8E9EB; }
+        .uebung-chip-saetze { font-size: 0.72em; color: #8A8F98; margin-top: 1px; }
+        .historie-tag { background: #191C21; border: 1px solid #262A31; border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+        .historie-tag summary { padding: 12px; font-weight: 700; cursor: pointer; list-style: none; color: #E8E9EB; }
         .historie-tag summary::-webkit-details-marker { display: none; }
         .historie-tag summary::after { content: '▸'; float: right; color: #8A8F98; transition: transform 0.2s ease; }
         .historie-tag[open] summary::after { transform: rotate(90deg); }
         .historie-tag-info { color: #8A8F98; font-weight: 400; font-size: 0.82em; margin-left: 6px; }
-        .historie-eintrag { padding: 10px 12px; border-top: 1px solid #EDEDF0; font-size: 0.9em; }
+        .historie-eintrag { padding: 10px 12px; border-top: 1px solid #262A31; font-size: 0.9em; color: #E8E9EB; }
         .dashboard-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        .dashboard-stat { background: #F4F4F7; border-radius: 10px; padding: 10px; text-align: center; }
-        .dashboard-stat-value { font-size: 1.4em; font-weight: 800; color: #1F2328; }
+        .dashboard-stat { background: #21252C; border-radius: 12px; padding: 10px; text-align: center; }
+        .dashboard-stat-value { font-size: 1.4em; font-weight: 800; color: #fff; }
         .dashboard-stat-label { font-size: 0.72em; color: #8A8F98; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
-        .dashboard-pr { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.85em; padding: 6px 0; border-top: 1px solid #EDEDF0; }
+        .dashboard-pr { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.85em; padding: 6px 0; border-top: 1px solid #262A31; color: #E8E9EB; }
         .dashboard-pr-datum { color: #8A8F98; font-size: 0.8em; white-space: nowrap; margin-left: 8px; }
-        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #1F2328; color: #fff; padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 14px rgba(0,0,0,0.25); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; white-space: nowrap; }
+        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #8A6D2E, #C9A34A); color: #fff; padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 14px rgba(138,109,46,0.35); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; white-space: nowrap; }
         .toast.show { opacity: 1; }
     </style>
 <script>
@@ -84,7 +85,7 @@
     <div class="info-box" style="padding: 8px;">
         <div class="info-box-label" id="planLabel">Trainingsplan wählen</div>
         <div class="tabs" id="planContainer"></div>
-        <button class="main-btn" onclick="zeigePlanverwaltung()" style="background: #6B7178; margin-top: 8px; font-size: 0.85em; padding: 8px;">Pläne verwalten</button>
+        <button class="main-btn" onclick="zeigePlanverwaltung()" style="background: #21252C; margin-top: 8px; font-size: 0.85em; padding: 8px;">Pläne verwalten</button>
     </div>
 
     <div id="planVerwaltungBereich" style="display:none;"></div>
@@ -112,13 +113,13 @@
         <div id="gesamtZaehler" class="sum-box"></div>
     </div>
 
-    <button class="main-btn" onclick="trainingAbschliessen()" style="background: #1F2328;">Training beenden</button>
-    <button class="main-btn" onclick="zeigeHistorie()" style="background: #6B7178;">Historie anzeigen</button>
-    <button class="main-btn" onclick="zeigeWochenuebersicht()" style="background: #2F6FE0;">Wochenübersicht</button>
+    <button class="main-btn" onclick="trainingAbschliessen()" style="background: linear-gradient(135deg, #8A6D2E, #C9A34A);">Training beenden</button>
+    <button class="main-btn" onclick="zeigeHistorie()" style="background: #21252C;">Historie anzeigen</button>
+    <button class="main-btn" onclick="zeigeWochenuebersicht()" style="background: linear-gradient(135deg, #8A6D2E, #C9A34A);">Wochenübersicht</button>
 
     <div style="display:flex; gap:8px;">
-        <button class="main-btn" onclick="datenExportieren()" style="background: #6B7178; flex:1;">Daten exportieren</button>
-        <button class="main-btn" onclick="document.getElementById('importFile').click()" style="background: #6B7178; flex:1;">Daten importieren</button>
+        <button class="main-btn" onclick="datenExportieren()" style="background: #21252C; flex:1;">Daten exportieren</button>
+        <button class="main-btn" onclick="document.getElementById('importFile').click()" style="background: #21252C; flex:1;">Daten importieren</button>
     </div>
     <input type="file" id="importFile" accept="application/json" style="display:none;" onchange="datenImportieren(event)">
 
@@ -292,7 +293,7 @@
             <div class="plan-verwaltung-zeile">
                 <span>${name} <span style="color:#999; font-size:0.8em;">(${plaene[name].length} Übungen)</span></span>
                 <span>
-                    <button class="klein-btn" style="background:#2F6FE0;" onclick="planEditorOeffnen('${name.replace(/'/g, "\\'")}')">Bearbeiten</button>
+                    <button class="klein-btn" style="background: linear-gradient(135deg, #8A6D2E, #C9A34A);" onclick="planEditorOeffnen('${name.replace(/'/g, "\\'")}')">Bearbeiten</button>
                     <button class="klein-btn" style="background:#D9534F;" onclick="planLoeschen('${name.replace(/'/g, "\\'")}')">Löschen</button>
                 </span>
             </div>`).join('') || "<p>Noch keine Pläne angelegt.</p>";
@@ -326,7 +327,7 @@
                 ${gruppenHtml}
             </div>
             <button class="main-btn" style="background:#28a745;" onclick="planSpeichern()">Speichern</button>
-            <button class="main-btn" style="background:#6c757d;" onclick="planEditorSchliessen()">Abbrechen</button>`;
+            <button class="main-btn" style="background:#21252C;" onclick="planEditorSchliessen()">Abbrechen</button>`;
     }
 
     function planEditorSchliessen() {
@@ -402,7 +403,7 @@
         
         const logDiv = document.getElementById('aktuellesSetLog');
         logDiv.innerHTML = `
-            <div style="background: #e9ecef; padding: 5px; border-radius: 4px; text-align: center; font-weight: bold; margin-bottom: 5px;">
+            <div style="background: #21252C; color: #E8E9EB; padding: 5px; border-radius: 4px; text-align: center; font-weight: bold; margin-bottom: 5px;">
                 Satz ${aktuelleSätze.length} erfasst
             </div>
             <div style="font-size: 0.85em; text-align: center;">
@@ -419,7 +420,7 @@
             row.insertCell(0).innerHTML = item.uebung;
             row.insertCell(1).innerHTML = item.saetze.map(s => s.wdh + 'x' + s.kg + 'kg').join(', ');
             row.insertCell(2).innerHTML = `
-                <button class="klein-btn" style="background:#2F6FE0;" onclick="heutigeUebungBearbeiten(${index})">✏️</button>
+                <button class="klein-btn" style="background: linear-gradient(135deg, #8A6D2E, #C9A34A);" onclick="heutigeUebungBearbeiten(${index})">✏️</button>
                 <button class="klein-btn" style="background:#D9534F;" onclick="heutigeUebungLoeschen(${index})">🗑️</button>`;
         });
     }
@@ -692,7 +693,7 @@
                     <strong>${l.uebung}</strong><br>
                     ${l.saetze.map(s => s.wdh+'x'+s.kg+'kg').join(' | ')}
                     <div style="margin-top:4px;">
-                        <button class="klein-btn" style="background:#2F6FE0;" onclick="historieBearbeiten('${l.id}')">✏️ Bearbeiten</button>
+                        <button class="klein-btn" style="background: linear-gradient(135deg, #8A6D2E, #C9A34A);" onclick="historieBearbeiten('${l.id}')">✏️ Bearbeiten</button>
                         <button class="klein-btn" style="background:#D9534F;" onclick="historieLoeschen('${l.id}')">🗑️ Löschen</button>
                     </div>
                 </div>`).join('');
