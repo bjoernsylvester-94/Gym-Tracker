@@ -43,6 +43,7 @@
         .plan-verwaltung-zeile { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #EDEDF0; }
         .klein-btn { padding: 6px 10px; border-radius: 6px; border: none; font-size: 0.8em; font-weight: bold; cursor: pointer; color: white; }
         .badge { display: inline-block; background: #2F6FE0; color: #fff; font-size: 0.7em; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; text-transform: none; }
+        .chip { display: inline-block; background: #EDEDF0; color: #3A3F45; font-size: 0.78em; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin: 2px 4px 2px 0; }
         .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #1F2328; color: #fff; padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 14px rgba(0,0,0,0.25); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; white-space: nowrap; }
         .toast.show { opacity: 1; }
     </style>
@@ -576,7 +577,7 @@
             });
 
             const tagKey = l.datumISO || l.datum;
-            if (!wochen[key].tage[tagKey]) wochen[key].tage[tagKey] = { datum: l.datum, uebungen: [] };
+            if (!wochen[key].tage[tagKey]) wochen[key].tage[tagKey] = { datum: l.datum, uebungen: [], dauerMinuten: l.dauerMinuten || null };
             if (!wochen[key].tage[tagKey].uebungen.includes(l.uebung)) {
                 wochen[key].tage[tagKey].uebungen.push(l.uebung);
             }
@@ -594,14 +595,22 @@
                 .sort((a, b) => b[1].saetze - a[1].saetze)
                 .map(([g, werte]) => `<tr><td>${g}</td><td>${werte.saetze}</td><td>${werte.volumen} kg</td></tr>`)
                 .join('');
+
             const tageSortiert = Object.keys(w.tage).sort().reverse();
+            const trainingstage = tageSortiert.length;
+            const gesamtdauer = Object.values(w.tage).reduce((sum, t) => sum + (t.dauerMinuten || 0), 0);
+            const kennzahlen = `${trainingstage} Trainingstag${trainingstage !== 1 ? 'e' : ''}` + (gesamtdauer ? ` · ${formatDauer(gesamtdauer)}` : '');
+
             const tageHtml = tageSortiert.map(tk => {
                 const tag = w.tage[tk];
-                return `<div style="margin-top:6px; font-size:0.85em;"><strong>${tag.datum}:</strong> ${tag.uebungen.join(', ')}</div>`;
+                const chips = tag.uebungen.map(u => `<span class="chip">${u}</span>`).join('');
+                return `<div style="margin-top:10px;"><div style="font-size:0.8em; font-weight:700; color:#3A3F45; margin-bottom:4px;">${tag.datum}</div>${chips}</div>`;
             }).join('');
+
             return `
                 <div class="info-box">
                     <strong>${von} – ${bis}</strong>
+                    <div style="color:#8A8F98; font-size:0.85em; margin-top:2px;">${kennzahlen}</div>
                     <table>
                         <thead><tr><th>Muskelgruppe</th><th>Sätze</th><th>Volumen</th></tr></thead>
                         <tbody>${zeilen}</tbody>
