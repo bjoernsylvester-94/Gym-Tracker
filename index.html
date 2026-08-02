@@ -48,6 +48,13 @@
         .uebung-chip { background: #EDEDF0; border-radius: 10px; padding: 6px 10px; }
         .uebung-chip-name { font-size: 0.78em; font-weight: 700; color: #1F2328; }
         .uebung-chip-saetze { font-size: 0.72em; color: #6B7178; margin-top: 1px; }
+        .historie-tag { background: #fff; border: 1px solid #EDEDF0; border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+        .historie-tag summary { padding: 12px; font-weight: 700; cursor: pointer; list-style: none; }
+        .historie-tag summary::-webkit-details-marker { display: none; }
+        .historie-tag summary::after { content: '▸'; float: right; color: #8A8F98; transition: transform 0.2s ease; }
+        .historie-tag[open] summary::after { transform: rotate(90deg); }
+        .historie-tag-info { color: #8A8F98; font-weight: 400; font-size: 0.82em; margin-left: 6px; }
+        .historie-eintrag { padding: 10px 12px; border-top: 1px solid #EDEDF0; font-size: 0.9em; }
         .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #1F2328; color: #fff; padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 14px rgba(0,0,0,0.25); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; white-space: nowrap; }
         .toast.show { opacity: 1; }
     </style>
@@ -550,16 +557,42 @@
 
         const gefiltert = filterSelect.value ? logs.filter(l => l.uebung === filterSelect.value) : logs;
 
-        document.getElementById('historieListe').innerHTML = gefiltert.slice().reverse().map(l => `
-            <div style="padding:5px; border-bottom:1px solid #ccc;">
-                <strong>${l.datum} - ${l.uebung}</strong>${l.dauerMinuten ? ` <span style="color:#8A8F98; font-size:0.8em; font-weight:400;">(Training: ${formatDauer(l.dauerMinuten)})</span>` : ''}<br>
-                ${l.saetze.map(s => s.wdh+'x'+s.kg+'kg').join(' | ')}
-                <div style="margin-top:4px;">
-                    <button class="klein-btn" style="background:#2F6FE0;" onclick="historieBearbeiten('${l.id}')">✏️ Bearbeiten</button>
-                    <button class="klein-btn" style="background:#D9534F;" onclick="historieLoeschen('${l.id}')">🗑️ Löschen</button>
-                </div>
-            </div>`).join('')
-            || "<p>Keine Einträge für diese Auswahl.</p>";
+        document.getElementById('historieListe').innerHTML = renderHistorieGruppiert(gefiltert);
+    }
+
+    function renderHistorieGruppiert(eintraege) {
+        if (eintraege.length === 0) return "<p>Keine Einträge für diese Auswahl.</p>";
+
+        const tage = {};
+        eintraege.forEach(l => {
+            const key = l.datumISO || l.datum;
+            if (!tage[key]) tage[key] = { datum: l.datum, dauerMinuten: l.dauerMinuten || null, eintraege: [] };
+            tage[key].eintraege.push(l);
+        });
+
+        const keysSortiert = Object.keys(tage).sort().reverse();
+
+        return keysSortiert.map((key, index) => {
+            const tag = tage[key];
+            const anzahl = tag.eintraege.length;
+            const dauerText = tag.dauerMinuten ? ` · ${formatDauer(tag.dauerMinuten)}` : '';
+
+            const zeilen = tag.eintraege.map(l => `
+                <div class="historie-eintrag">
+                    <strong>${l.uebung}</strong><br>
+                    ${l.saetze.map(s => s.wdh+'x'+s.kg+'kg').join(' | ')}
+                    <div style="margin-top:4px;">
+                        <button class="klein-btn" style="background:#2F6FE0;" onclick="historieBearbeiten('${l.id}')">✏️ Bearbeiten</button>
+                        <button class="klein-btn" style="background:#D9534F;" onclick="historieLoeschen('${l.id}')">🗑️ Löschen</button>
+                    </div>
+                </div>`).join('');
+
+            return `
+                <details class="historie-tag" ${index === 0 ? 'open' : ''}>
+                    <summary>${tag.datum} <span class="historie-tag-info">${anzahl} Übung${anzahl !== 1 ? 'en' : ''}${dauerText}</span></summary>
+                    ${zeilen}
+                </details>`;
+        }).join('');
     }
 
     function historieBearbeiten(id) {
