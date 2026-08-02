@@ -588,7 +588,7 @@
                 </div>`).join('');
 
             return `
-                <details class="historie-tag" ${index === 0 ? 'open' : ''}>
+                <details class="historie-tag" ${index < 3 ? 'open' : ''}>
                     <summary>${tag.datum} <span class="historie-tag-info">${anzahl} Übung${anzahl !== 1 ? 'en' : ''}${dauerText}</span></summary>
                     ${zeilen}
                 </details>`;
