@@ -55,6 +55,12 @@
         .historie-tag[open] summary::after { transform: rotate(90deg); }
         .historie-tag-info { color: #8A8F98; font-weight: 400; font-size: 0.82em; margin-left: 6px; }
         .historie-eintrag { padding: 10px 12px; border-top: 1px solid #EDEDF0; font-size: 0.9em; }
+        .dashboard-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .dashboard-stat { background: #F4F4F7; border-radius: 10px; padding: 10px; text-align: center; }
+        .dashboard-stat-value { font-size: 1.4em; font-weight: 800; color: #1F2328; }
+        .dashboard-stat-label { font-size: 0.72em; color: #8A8F98; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+        .dashboard-pr { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.85em; padding: 6px 0; border-top: 1px solid #EDEDF0; }
+        .dashboard-pr-datum { color: #8A8F98; font-size: 0.8em; white-space: nowrap; margin-left: 8px; }
         .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #1F2328; color: #fff; padding: 10px 20px; border-radius: 30px; font-weight: 600; font-size: 0.9em; box-shadow: 0 4px 14px rgba(0,0,0,0.25); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; white-space: nowrap; }
         .toast.show { opacity: 1; }
     </style>
@@ -72,6 +78,8 @@
 
 <div class="container">
     <h2>Gym Tracker</h2>
+
+    <div class="info-box" id="dashboard"></div>
 
     <div class="info-box" style="padding: 8px;">
         <div class="info-box-label" id="planLabel">Trainingsplan wählen</div>
@@ -217,6 +225,7 @@
         });
     }
     renderPlanTabs();
+    renderDashboard();
 
     function zeigePlan(planName, btn) {
         aktiverPlan = planName;
@@ -528,6 +537,107 @@
         d.setDate(d.getDate() - tag);
         d.setHours(0, 0, 0, 0);
         return d;
+    }
+
+    // Anzahl Wochen in Folge (bis zur aktuellen bzw. zuletzt trainierten Woche) mit mind. einem Training
+    function berechneWochenStreak() {
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+        if (logs.length === 0) return 0;
+
+        const wochenMitTraining = new Set(logs.map(l => wochenStart(parseLogDatum(l)).toISOString().slice(0, 10)));
+
+        let cursor = wochenStart(new Date());
+        if (!wochenMitTraining.has(cursor.toISOString().slice(0, 10))) {
+            cursor.setDate(cursor.getDate() - 7);
+        }
+
+        let streak = 0;
+        while (wochenMitTraining.has(cursor.toISOString().slice(0, 10))) {
+            streak++;
+            cursor.setDate(cursor.getDate() - 7);
+        }
+        return streak;
+    }
+
+    // Anzahl unterschiedlicher Trainingstage in der aktuellen Kalenderwoche
+    function berechneTrainingsDieseWoche() {
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const start = wochenStart(new Date()).getTime();
+        const tage = new Set();
+        logs.forEach(l => {
+            if (wochenStart(parseLogDatum(l)).getTime() === start) {
+                tage.add(l.datumISO || l.datum);
+            }
+        });
+        return tage.size;
+    }
+
+    // Ermittelt chronologisch alle Bestleistungen (Gewicht hoch oder Wdh bei gleichem Gewicht hoch), neueste zuerst
+    function berechneAllePRs() {
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+        const sortiert = logs.slice().sort((a, b) => (a.datumISO || '').localeCompare(b.datumISO || ''));
+
+        const maxKgProUebung = {};
+        const maxWdhBeiKg = {};
+        const prs = [];
+
+        sortiert.forEach(l => {
+            l.saetze.forEach(s => {
+                const bisherMaxKg = maxKgProUebung[l.uebung];
+                if (bisherMaxKg === undefined) {
+                    maxKgProUebung[l.uebung] = s.kg;
+                } else if (s.kg > bisherMaxKg) {
+                    maxKgProUebung[l.uebung] = s.kg;
+                    prs.push({ uebung: l.uebung, datum: l.datum, datumISO: l.datumISO, text: `${s.kg} kg` });
+                }
+
+                const key = l.uebung + '|' + s.kg;
+                const bisherMaxWdh = maxWdhBeiKg[key];
+                if (bisherMaxWdh === undefined) {
+                    maxWdhBeiKg[key] = s.wdh;
+                } else if (s.wdh > bisherMaxWdh) {
+                    maxWdhBeiKg[key] = s.wdh;
+                    prs.push({ uebung: l.uebung, datum: l.datum, datumISO: l.datumISO, text: `${s.wdh}x${s.kg}kg` });
+                }
+            });
+        });
+
+        return prs.sort((a, b) => (b.datumISO || '').localeCompare(a.datumISO || ''));
+    }
+
+    function renderDashboard() {
+        const box = document.getElementById('dashboard');
+        const logs = JSON.parse(localStorage.getItem('logs')) || [];
+
+        if (logs.length === 0) {
+            box.innerHTML = `<div class="info-box-label">Übersicht</div><p style="font-size:0.9em; color:#8A8F98; margin:4px 0 0;">Noch keine Trainingsdaten – leg los!</p>`;
+            return;
+        }
+
+        const streak = berechneWochenStreak();
+        const trainingsDieseWoche = berechneTrainingsDieseWoche();
+        const prs = berechneAllePRs().slice(0, 3);
+
+        const prsHtml = prs.length ? prs.map(pr => `
+            <div class="dashboard-pr">
+                <span><strong>${pr.uebung}</strong> – ${pr.text}</span>
+                <span class="dashboard-pr-datum">${pr.datum}</span>
+            </div>`).join('') : `<p style="font-size:0.85em; color:#8A8F98; margin:6px 0 0;">Noch keine Bestleistungen erfasst.</p>`;
+
+        box.innerHTML = `
+            <div class="info-box-label">Übersicht</div>
+            <div class="dashboard-stats">
+                <div class="dashboard-stat">
+                    <div class="dashboard-stat-value">🔥 ${streak}</div>
+                    <div class="dashboard-stat-label">Wochen-Streak</div>
+                </div>
+                <div class="dashboard-stat">
+                    <div class="dashboard-stat-value">${trainingsDieseWoche}</div>
+                    <div class="dashboard-stat-label">Trainings diese Woche</div>
+                </div>
+            </div>
+            <div style="font-size:0.78em; font-weight:700; color:#8A8F98; text-transform:uppercase; letter-spacing:0.4px; margin-top:4px;">Letzte Bestleistungen</div>
+            ${prsHtml}`;
     }
     
     function zeigeHistorie() {
