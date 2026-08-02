@@ -331,9 +331,20 @@
         document.getElementById('aktuellesSetLog').innerHTML = '';
         
         const logs = JSON.parse(localStorage.getItem('logs')) || [];
-        const letzte = logs.filter(l => l.uebung === name).slice(-1)[0];
-        document.getElementById('letzterStand').innerHTML = letzte ? 
+        const eintraege = logs.filter(l => l.uebung === name);
+        const letzte = eintraege.slice(-1)[0];
+
+        let bestSatz = null;
+        eintraege.forEach(e => e.saetze.forEach(s => {
+            if (!bestSatz || s.kg > bestSatz.kg) bestSatz = s;
+        }));
+
+        let stand = letzte ?
             `<strong>Letztes Mal:</strong> ${letzte.saetze.map(s => `${s.wdh}x${s.kg}kg`).join(', ')}` : "Keine Historie.";
+        if (bestSatz) {
+            stand += `<br><strong>Bestwert:</strong> ${bestSatz.wdh}x${bestSatz.kg}kg`;
+        }
+        document.getElementById('letzterStand').innerHTML = stand;
     }
 
     function satzHinzufuegen() {
@@ -556,13 +567,19 @@
         logs.forEach(l => {
             const start = wochenStart(parseLogDatum(l));
             const key = start.toISOString().slice(0, 10);
-            if (!wochen[key]) wochen[key] = { start, gruppen: {} };
+            if (!wochen[key]) wochen[key] = { start, gruppen: {}, tage: {} };
             const gruppe = l.gruppe || findGruppe(l.uebung);
             if (!wochen[key].gruppen[gruppe]) wochen[key].gruppen[gruppe] = { saetze: 0, volumen: 0 };
             l.saetze.forEach(s => {
                 wochen[key].gruppen[gruppe].saetze++;
                 wochen[key].gruppen[gruppe].volumen += (s.wdh * s.kg);
             });
+
+            const tagKey = l.datumISO || l.datum;
+            if (!wochen[key].tage[tagKey]) wochen[key].tage[tagKey] = { datum: l.datum, uebungen: [] };
+            if (!wochen[key].tage[tagKey].uebungen.includes(l.uebung)) {
+                wochen[key].tage[tagKey].uebungen.push(l.uebung);
+            }
         });
 
         const keysSortiert = Object.keys(wochen).sort().reverse();
@@ -577,6 +594,11 @@
                 .sort((a, b) => b[1].saetze - a[1].saetze)
                 .map(([g, werte]) => `<tr><td>${g}</td><td>${werte.saetze}</td><td>${werte.volumen} kg</td></tr>`)
                 .join('');
+            const tageSortiert = Object.keys(w.tage).sort().reverse();
+            const tageHtml = tageSortiert.map(tk => {
+                const tag = w.tage[tk];
+                return `<div style="margin-top:6px; font-size:0.85em;"><strong>${tag.datum}:</strong> ${tag.uebungen.join(', ')}</div>`;
+            }).join('');
             return `
                 <div class="info-box">
                     <strong>${von} – ${bis}</strong>
@@ -584,6 +606,7 @@
                         <thead><tr><th>Muskelgruppe</th><th>Sätze</th><th>Volumen</th></tr></thead>
                         <tbody>${zeilen}</tbody>
                     </table>
+                    ${tageHtml}
                 </div>`;
         }).join('');
     }
