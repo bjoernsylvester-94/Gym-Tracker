@@ -165,13 +165,30 @@
         window._toastTimeout = setTimeout(() => t.classList.remove('show'), 2800);
     }
 
-    // Prüft, ob in den neuen Sätzen ein höheres Gewicht steckt als je zuvor bei dieser Übung
-    function pruefeBestleistung(uebung, saetze) {
+    // Prüft, ob in den neuen Sätzen entweder ein höheres Gewicht als je zuvor steckt,
+    // oder bei gleichem Gewicht mehr Wiederholungen als je zuvor geschafft wurden.
+    function pruefeBestleistung(uebung, neueSaetze) {
         const logs = JSON.parse(localStorage.getItem('logs')) || [];
-        const bisherigeGewichte = logs.filter(l => l.uebung === uebung).flatMap(l => l.saetze.map(s => s.kg));
-        const bisherigesMax = bisherigeGewichte.length ? Math.max(...bisherigeGewichte) : 0;
-        const neuesMax = Math.max(...saetze.map(s => s.kg));
-        return neuesMax > bisherigesMax ? neuesMax : null;
+        const bisherigeSaetze = logs.filter(l => l.uebung === uebung).flatMap(l => l.saetze);
+        if (bisherigeSaetze.length === 0) return null;
+
+        const bisherigesMaxKg = Math.max(...bisherigeSaetze.map(s => s.kg));
+        const neuesMaxKg = Math.max(...neueSaetze.map(s => s.kg));
+
+        if (neuesMaxKg > bisherigesMaxKg) {
+            return `🏆 Neue Bestleistung: ${neuesMaxKg} kg!`;
+        }
+
+        for (const neu of neueSaetze) {
+            const bisherigeWdhBeiGewicht = bisherigeSaetze.filter(s => s.kg === neu.kg).map(s => s.wdh);
+            if (bisherigeWdhBeiGewicht.length === 0) continue;
+            const bisherigesMaxWdh = Math.max(...bisherigeWdhBeiGewicht);
+            if (neu.wdh > bisherigesMaxWdh) {
+                return `🏆 Neue Bestleistung: ${neu.wdh}x${neu.kg}kg (mehr Wdh als je zuvor)!`;
+            }
+        }
+
+        return null;
     }
 
     const tabContainer = document.getElementById('tabContainer');
@@ -350,6 +367,15 @@
             stand += `<br><strong>Bestwert:</strong> ${bestSatz.wdh}x${bestSatz.kg}kg`;
         }
         document.getElementById('letzterStand').innerHTML = stand;
+
+        // Startgewicht vorschlagen: der erste Satz (meist der leichteste/Aufwärmsatz) des letzten Trainings
+        if (letzte && letzte.saetze.length > 0) {
+            document.getElementById('wdh').value = letzte.saetze[0].wdh;
+            document.getElementById('kg').value = letzte.saetze[0].kg;
+        } else {
+            document.getElementById('wdh').value = '';
+            document.getElementById('kg').value = '';
+        }
     }
 
     function satzHinzufuegen() {
@@ -432,8 +458,8 @@
         document.getElementById('eingabeBereich').style.display = 'none';
         document.querySelectorAll('.uebung-btn').forEach(b => b.classList.remove('active'));
 
-        if (neueBestleistung !== null) {
-            zeigeToast(`🏆 Neue Bestleistung: ${neueBestleistung} kg!`);
+        if (neueBestleistung) {
+            zeigeToast(neueBestleistung);
         }
 
         // Manuell (über eine Muskelgruppe) hinzugefügte Übung, die nicht Teil des aktiven Plans ist: optional dauerhaft übernehmen
